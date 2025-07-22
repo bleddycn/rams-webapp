@@ -93,31 +93,33 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">RAMS</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-lg font-semibold text-gray-900">RAMS</h1>
+              <p className="text-xs text-gray-500">
                 {profile?.role === 'admin' ? 'Administrator' : 'Worker'}
               </p>
             </div>
           </div>
           <Button
             variant="ghost"
-            size="icon"
-            className="lg:hidden"
+            size="sm"
+            className="lg:hidden h-8 w-8"
             onClick={() => setSidebarOpen(false)}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </Button>
         </div>
 
-        <nav className="mt-6">
-          <div className="px-6 space-y-1">
+        <nav className="mt-8">
+          <div className="px-4 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href
               return (
@@ -125,9 +127,9 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   className={`
-                    group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                    group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
                     ${isActive 
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
+                      ? 'bg-blue-50 text-blue-700' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }
                   `}
@@ -146,10 +148,10 @@ export default function DashboardLayout({
         </nav>
 
         {/* User info at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-gray-600 text-sm font-medium">
                 {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
               </span>
             </div>
@@ -164,7 +166,7 @@ export default function DashboardLayout({
             variant="outline"
             size="sm"
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center space-x-2"
+            className="w-full flex items-center justify-center space-x-2 text-gray-600"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -178,15 +180,15 @@ export default function DashboardLayout({
         <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </Button>
         </div>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="min-h-screen bg-gray-50">
           {children}
         </main>
       </div>

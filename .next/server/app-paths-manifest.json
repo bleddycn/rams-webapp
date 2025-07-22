@@ -1,6 +1,8 @@
 {
+  "/dashboard/compliance/page": "app/dashboard/compliance/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/projects/page": "app/dashboard/projects/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/dashboard/rams/page": "app/dashboard/rams/page.js",
+  "/dashboard/users/page": "app/dashboard/users/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }

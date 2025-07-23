@@ -6,7 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Search, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { 
+  Plus, 
+  Search, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  MoreHorizontal,
+  FolderOpen,
+  User,
+  Calendar,
+  ChevronRight as ChevronRightIcon
+} from 'lucide-react'
 
 interface Project {
   id: string
@@ -27,34 +38,72 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [newProject, setNewProject] = useState({ name: '', description: '' })
   const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadProjects()
   }, [])
 
   const loadProjects = async () => {
-    const { data } = await supabase
-      .from('projects')
-      .select(`
-        *,
-        profiles!projects_created_by_fkey (
-          full_name,
-          email
-        )
-      `)
-      .order('created_at', { ascending: false })
+    try {
+      setError(null)
+      console.log('Loading projects...')
+      
+      // First get all projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (projectsError) {
+        console.error('Error loading projects:', projectsError)
+        setError(projectsError.message)
+        setLoading(false)
+        return
+      }
+
+      // Then get all profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+      
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError)
+        setError(profilesError.message)
+        setLoading(false)
+        return
+      }
+
+      // Manually join the data since both created_by and profiles.id reference auth.users.id
+      const projectsWithProfiles = projectsData?.map(project => ({
+        ...project,
+        profiles: profilesData?.find(profile => profile.id === project.created_by)
+      })) || []
+
+      console.log('Projects loaded:', projectsWithProfiles)
+      setProjects(projectsWithProfiles)
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      setError('Failed to load projects')
+    }
     
-    setProjects(data || [])
     setLoading(false)
   }
 
   const createProject = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreating(true)
+    setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setError('You must be logged in to create a project')
+        setCreating(false)
+        return
+      }
+
       const { error } = await supabase
         .from('projects')
         .insert([
@@ -65,11 +114,17 @@ export default function ProjectsPage() {
           }
         ])
 
-      if (!error) {
+      if (error) {
+        console.error('Error creating project:', error)
+        setError(error.message)
+      } else {
         setNewProject({ name: '', description: '' })
         setShowCreateForm(false)
-        loadProjects()
+        await loadProjects() // Reload projects
       }
+    } catch (err) {
+      console.error('Unexpected error creating project:', err)
+      setError('Failed to create project')
     }
     
     setCreating(false)
@@ -91,17 +146,37 @@ export default function ProjectsPage() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Projects</h1>
         <div className="flex items-center text-sm text-gray-500">
           <span>Home</span>
-          <ChevronRight className="w-4 h-4 mx-2" />
+          <ChevronRightIcon className="w-4 h-4 mx-2" />
           <span>Project Management</span>
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800 text-sm">Error: {error}</p>
+          <Button 
+            onClick={loadProjects} 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Create Form Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
+          <Card className="w-full max-w-lg mx-4">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New Project</h3>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+                  {error}
+                </div>
+              )}
               <form onSubmit={createProject} className="space-y-4">
                 <div>
                   <Label htmlFor="name" className="text-sm font-medium text-gray-700">Project Name</Label>
@@ -135,7 +210,10 @@ export default function ProjectsPage() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowCreateForm(false)}
+                    onClick={() => {
+                      setShowCreateForm(false)
+                      setError(null)
+                    }}
                     className="flex-1"
                   >
                     Cancel
@@ -180,9 +258,16 @@ export default function ProjectsPage() {
           className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add project
+          Add Project
         </Button>
       </div>
+
+      {/* Debug Info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm">
+          Debug: Found {projects.length} projects in database
+        </div>
+      )}
 
       {/* Table */}
       <Card className="border border-gray-200">
@@ -209,7 +294,7 @@ export default function ProjectsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map((project, index) => (
+                {filteredProjects.map((project) => (
                   <tr 
                     key={project.id} 
                     className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
@@ -217,11 +302,15 @@ export default function ProjectsPage() {
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-sm">
-                          {project.name.charAt(0).toUpperCase()}
+                          {project.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">{project.name}</div>
-                          <div className="text-sm text-gray-500">{project.description || 'No description'}</div>
+                          <button 
+                            onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
+                            className="font-medium text-gray-900 hover:text-blue-600 transition-colors text-left"
+                          >
+                            {project.name}
+                          </button>
                         </div>
                       </div>
                     </td>
@@ -231,19 +320,24 @@ export default function ProjectsPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <div className="text-sm text-gray-900 font-medium">
-                        {project.profiles?.full_name || 'Unknown'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {project.profiles?.email}
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-900 font-medium">
+                            {project.profiles?.full_name || 'Unknown User'}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-sm text-gray-600">
-                      {new Date(project.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(project.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}</span>
+                      </div>
                     </td>
                     <td className="py-4 px-4">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -260,7 +354,7 @@ export default function ProjectsPage() {
           {filteredProjects.length === 0 && !loading && (
             <div className="text-center py-12">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-6 h-6 text-gray-400" />
+                <FolderOpen className="w-6 h-6 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
               <p className="text-gray-500 mb-4">

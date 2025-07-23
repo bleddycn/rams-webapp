@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   LayoutDashboard, 
   FolderOpen, 
@@ -60,9 +61,8 @@ export default function DashboardLayout({
   const adminNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { title: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-    { title: 'RAMS Documents', href: '/dashboard/rams', icon: FileText },
-    { title: 'Users', href: '/dashboard/users', icon: Users },
     { title: 'Compliance', href: '/dashboard/compliance', icon: Shield },
+    { title: 'Users', href: '/dashboard/users', icon: Users },
   ]
 
   const workerNavItems = [
@@ -96,17 +96,17 @@ export default function DashboardLayout({
         fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
+        {/* Logo Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">RAMS</h1>
-              <p className="text-xs text-gray-500">
-                {profile?.role === 'admin' ? 'Administrator' : 'Worker'}
-              </p>
-            </div>
+            <Image
+              src="/logo/ramses-logo.png"
+              alt="RAMSES"
+              width={200}
+              height={80}
+              className="h-16 w-auto object-contain"
+              priority
+            />
           </div>
           <Button
             variant="ghost"
@@ -118,7 +118,19 @@ export default function DashboardLayout({
           </Button>
         </div>
 
-        <nav className="mt-8">
+        {/* User Role Badge */}
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${
+              profile?.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'
+            }`}></div>
+            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+              {profile?.role === 'admin' ? 'Administrator' : 'Worker'}
+            </span>
+          </div>
+        </div>
+
+        <nav className="mt-6">
           <div className="px-4 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href
@@ -177,7 +189,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 lg:ml-0">
         {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -185,6 +197,16 @@ export default function DashboardLayout({
           >
             <Menu className="w-5 h-5" />
           </Button>
+          {/* Mobile logo */}
+          <Image
+            src="/logo/ramses-logo.png"
+            alt="RAMSES"
+            width={100}
+            height={40}
+            className="h-8 w-auto object-contain"
+            priority
+          />
+          <div className="w-10"></div> {/* Spacer for centering */}
         </div>
 
         {/* Page content */}

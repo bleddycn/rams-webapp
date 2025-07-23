@@ -302,9 +302,7 @@ export default function DashboardPage() {
                     </div>
                   </a>
                   
-                  <a href="/dashboard/rams"
-                    className="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
-                  >
+                  <a href="/dashboard/rams" className="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium text-green-900">Upload RAMS Document</div>
